@@ -1,0 +1,49 @@
+
+services:
+  # Base de datos PostgreSQL
+  db:
+    image: postgres:15-alpine
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - red-menu
+
+  # Tu servidor Backend (Node.js + IA)
+  backend:
+    build: .
+    container_name: menu-backend-app
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+       - PORT=3000
+       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
+    env_file:
+      - .env # Toma tu API Key de Gemini de forma segura
+    depends_on:
+      - db
+    networks:
+      - red-menu
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - "8080:8080"
+    networks:
+      - red-menu
+      
+volumes:
+  pgdata:
+
+networks:
+  red-menu:
+    driver: bridge
